@@ -1,0 +1,89 @@
+﻿@page "/users/login"
+@layout LoginLayout
+@inject IAuthenticationService _authSerice
+@inject NavigationManager _navManager
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Logare</PageTitle>
+
+<style>
+    body {
+        background-color: #86B353;
+    }
+</style>
+
+
+<MudGrid Class="grid-zone" Justify="Justify.Center">
+    <MudItem xs="6">
+        <MudPaper Class="pa-4 ma-1">
+            <MudPaper Class="d-flex pb-4 justify-center flex-grow-1 gap-4" Elevation="0">
+                <h1>Demo App</h1>
+            </MudPaper>
+
+            <EditForm Model="@LoginModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+                <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                    <MudTextField T="string" Label="Email" Required="true" @bind-Value="LoginModel.Email" Variant="Variant.Outlined" />
+                    <MudTextField T="string" Label="Password" InputType="InputType.Password" Required="true" @bind-Value="LoginModel.Password" Variant="Variant.Outlined" />
+                </MudFocusTrap>
+                <br />
+                <div class="d-flex pt-5 align-center justify-space-between">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Class="ml-auto">
+
+                        @if (busy)
+                        {
+                            <MudProgressCircular Class="pa-2" Color="Color.Info" Indeterminate="true" />
+                            <MudText Class="ms-2">In curs de autentificare...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Autentificare</MudText>
+                        }
+
+                    </MudButton>
+                </div>
+                <MudButton Class="ml-2" Variant="Variant.Text" Size="Size.Small" Color="Color.Primary" OnClick="@(args => _navManager.NavigateTo("/users/register"))">Creaza Cont</MudButton>
+            </EditForm>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    bool success;
+    bool busy = false;
+    LoginUserDto LoginModel = new LoginUserDto();
+
+
+    private async Task HandleLogin()
+    {
+        busy = true;
+        try
+        {
+            var response = await _authSerice.AuthenticateAsync(LoginModel);
+            busy = false;
+            StateHasChanged();
+            if (response)
+            {
+                Snackbar.Add("Login Successful!", Severity.Success);
+                NavigateToHome();
+            }
+
+
+        }
+        catch (ApiException ex)
+        {
+            busy = false;
+            Snackbar.Add($"Login was not successfull, encountered:{ex.Message}", Severity.Error);
+            if (ex.StatusCode >= 200 && ex.StatusCode <= 299)
+            {
+                NavigateToHome();
+            }
+        }
+    }
+
+    private void NavigateToHome()
+    {
+        _navManager.NavigateTo("/");
+    }
+}

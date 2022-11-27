@@ -1,0 +1,60 @@
+﻿@page "/companies/create"
+@inject ICompanyService _companyService
+@inject NavigationManager _navManager
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "Administrator")]
+<PageTitle>Companii</PageTitle>
+
+<h3>Adauga Companie</h3>
+
+
+<EditForm Model="@CompanyModel" OnValidSubmit="HandleCreateCompany">
+<DataAnnotationsValidator/>
+<MudGrid>
+    <MudItem xs="12" sm="7">
+        <MudCard>
+            <MudCardContent>
+                <MudTextField Label="Nume"
+                                  @bind-Value="CompanyModel.Name" For="@(() => CompanyModel.Name)" />
+                    <MudTextField Label="Excahnge"
+                                  @bind-Value="CompanyModel.Exchange" For="@(() => CompanyModel.Exchange)" />
+                    <MudTextField Label="Ticker"
+                                  @bind-Value="CompanyModel.Ticker" For="@(() => CompanyModel.Ticker)" />
+                    <MudTextField Label="Isin"
+                                  @bind-Value="CompanyModel.Isin" For="@(() => CompanyModel.Isin)" />
+                    <MudTextField Label="Website"
+                                  @bind-Value="CompanyModel.Website" For="@(() => CompanyModel.Website)" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Creaza</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+</EditForm>
+
+@code {
+    private bool busy = false;
+    private CreateCompanyDto CompanyModel = new CreateCompanyDto();
+
+    private async Task HandleCreateCompany()
+    {
+        busy = true;
+        var response = await _companyService.CreateCompany(CompanyModel);
+        busy = false;
+
+        if(response.Success)
+        {
+            BackToList();
+            Snackbar.Add("Company added succesfully.", Severity.Success);
+        }
+        else{
+            Snackbar.Add($"Unable to create company", Severity.Error);
+        }
+    }
+
+    private void BackToList()
+    {
+        _navManager.NavigateTo("/companies");
+    }
+}

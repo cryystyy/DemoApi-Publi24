@@ -1,0 +1,35 @@
+﻿@inject IAuthenticationService _authSerice
+
+<MudNavMenu>
+    <AuthorizeView Roles="Administrator">
+        <Authorized>
+            <MudNavLink Href="/companies" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Companii</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="User">
+        <Authorized>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="User,Administrator">
+        <NotAuthorized>
+            <MudNavLink Href="users/login" Match="NavLinkMatch.Prefix" Icon="@Icons.Filled.Login">Login</MudNavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+
+</MudNavMenu>
+
+
+
+@code {
+    public Guid UserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserId = await _authSerice.GetUserIdAsync();
+    }
+
+}

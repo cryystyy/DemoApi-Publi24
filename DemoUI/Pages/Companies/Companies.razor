@@ -1,0 +1,87 @@
+﻿@page "/companies"
+@inject ICompanyService _companyService
+@inject NavigationManager _navManager
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "Administrator")]
+<PageTitle>Companii</PageTitle>
+
+<div class="pa-3">
+    <div class="d-inline pa-2 mud-theme-primary">Companii</div>
+    <div class="d-inline pa-2"><MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick=@(args => _navManager.NavigateTo("/companies/create")) /></div>
+</div>
+
+@if(loading)
+{
+    <MudSkeleton Animation="Animation.Wave" />
+    <MudSkeleton Animation="Animation.Wave" />
+    <MudSkeleton Animation="Animation.Wave" />
+    <MudSkeleton Animation="Animation.Wave" />
+}
+else{
+<MudDataGrid Items="@companies" T="CompanyDto" ReadOnly="false" EditMode="@(DataGridEditMode.Form)" Loading="loading"
+             Bordered="true" Dense="true" CommittedItemChanges="@UpdateCompany">
+    <Columns>
+        <Column T="CompanyDto" Field="Isin" Title="Isin"  HeaderClass="mud-theme-secondary" />
+        <Column T="CompanyDto" Field="Name" Title="Name" HeaderClass="mud-theme-secondary" />
+        <Column T="CompanyDto" Field="Exchange" Title="Exchange" HeaderClass="mud-theme-secondary" />
+        <Column T="CompanyDto" Field="Ticker" Title="Tiker" HeaderClass="mud-theme-secondary" />
+        <Column T="CompanyDto" Field="Website" Title="Website" HeaderClass="mud-theme-secondary" />
+        <Column T="CompanyDto" Title="Actions" Hidden="false" HeaderClass="mud-theme-secondary">
+            <CellTemplate>
+                <MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@context.Actions.StartEditingItem" />
+                <MudFab Color="Color.Error" StartIcon="@Icons.Filled.Delete" Size="Size.Small" OnClick="@(args => DeleteCompany(context.Item))" />
+            </CellTemplate>
+        </Column>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Typo="Typo.h5" Class="mud-text-secondary mt-16 mb-16">No data to display</MudText>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudDataGridPager T="CompanyDto" />
+    </PagerContent>
+</MudDataGrid>
+
+}
+@code {
+    private List<CompanyDto> companies = new List<CompanyDto>();
+    private bool loading = true;
+    private Response<List<CompanyDto>> response = new Response<List<CompanyDto>> { Success = true };
+    private Response<CompanyDto> updateResponse = new Response<CompanyDto> { Success = true };
+    private Response<CompanyDto> deleteResponse = new Response<CompanyDto> { Success = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        response = await _companyService.GetAll();
+        if (response.Success)
+        {
+            companies = response.Data;
+        }
+        else
+        {
+            //var notification = new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = response.Message, Duration = 4000 };
+            //ShowNotification(notification);
+        }
+        loading = false;
+    }
+
+    async Task UpdateCompany(CompanyDto item)
+    {
+        updateResponse = await _companyService.UpdateCompany(item.Id.Value, item);
+        if (!updateResponse.Success)
+        {
+            Snackbar.Add("Unable to update company.", Severity.Error);
+        }
+        else{
+            Snackbar.Add("Company updated!", Severity.Success);
+        }
+
+    }
+
+    async Task DeleteCompany(CompanyDto item)
+    {
+        await _companyService.DeleteCompany(item.Id.Value);
+        companies.Remove(item);
+        Snackbar.Add("Company removed!", Severity.Success);
+    }
+
+}

@@ -1,0 +1,99 @@
+﻿@page "/users/register"
+@layout LoginLayout
+@inject IClient _httpClient
+@inject NavigationManager _navManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Creaza Cont</PageTitle>
+
+<style>
+    body {
+        background-color: #86B353;
+    }
+</style>
+
+
+<MudGrid Class="grid-zone" Justify="Justify.Center">
+    <MudItem xs="6">
+        <MudPaper Class="pa-4 ma-1">
+            <MudPaper Class="d-flex pb-4 justify-center flex-grow-1 gap-4" Elevation="0">
+                <h1>Demo App</h1>
+            </MudPaper>
+
+
+
+            <EditForm Model="@RegistrationModel" OnValidSubmit="HandleRegistration">
+                <DataAnnotationsValidator />
+                <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                    <MudTextField T="string" Label="Nume" Required="true" @bind-Value="RegistrationModel.LastName" For="@(() => RegistrationModel.LastName)" Variant="Variant.Outlined" RequiredError="Numele este oblicagoriu."/>
+                    <MudTextField T="string" Label="Prenume" Required="true" @bind-Value="RegistrationModel.FirstName" For="@(() => RegistrationModel.FirstName)" Variant="Variant.Outlined" RequiredError="Prenumele este oblicagoriu."/>
+                    <MudTextField T="string" Label="Email" Required="true" @bind-Value="RegistrationModel.Email" For="@(() => RegistrationModel.Email)" Variant="Variant.Outlined" RequiredError="Emailul este oblicagoriu." />
+                    <MudTextField T="string" Label="Parola" InputType="InputType.Password" Required="true" @bind-Value="RegistrationModel.Password" For="@(() => RegistrationModel.Password)" Variant="Variant.Outlined" RequiredError="Parola este oblicagoriu." />
+                </MudFocusTrap>
+                <br />
+                <div class="d-flex pt-5 align-center justify-space-between">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="busy" ButtonType="ButtonType.Submit" Class="ml-auto">
+
+                        @if (busy)
+                        {
+                            <MudProgressCircular Class="pa-2" Color="Color.Info" Indeterminate="true" />
+                            <MudText Class="ms-2">Se incarca...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Creaza cont</MudText>
+                        }
+
+                    </MudButton>
+                </div>
+            </EditForm>
+
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+
+
+@code {
+    CreateUserDto RegistrationModel = new CreateUserDto();
+    bool valid;
+    bool busy = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private async Task HandleRegistration(EditContext context)
+    {
+        busy = true;
+
+
+        if(context.Validate())
+        {
+            try
+            {
+                await _httpClient.RegisterAsync(RegistrationModel);
+                NavigateToLogin();
+            }
+            catch (ApiException ex)
+            {
+                if (ex.StatusCode >= 200 && ex.StatusCode <= 299)
+                {
+                    NavigateToLogin();
+                }
+                else{
+                    Snackbar.Add($"Am intampinat urmatoare eroare: {ex.Message}", Severity.Error);
+                }
+            }
+        }
+        
+        busy = false;
+        StateHasChanged();
+    }
+
+
+    private void NavigateToLogin()
+    {
+        _navManager.NavigateTo("/users/login");
+    }
+}
